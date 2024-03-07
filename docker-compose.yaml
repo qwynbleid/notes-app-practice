@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+
+  frontend:
+    image: notes-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - notes-network
+
+  mongodb:
+    image: mongo
+    mem_limit: 700m
+    ports:
+      - "27017:27017"
+    networks:
+      - notes-network
+
+  notes-service:
+    image: notes-service-docker
+    ports:
+      - "8100:8100"
+    networks:
+      - notes-network
+    depends_on:
+      - eureka-service
+      - mongodb
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING.DATA.MONGODB.HOST: mongodb
+      SPRING.DATA.MONGODB.PORT: 27017
+      SPRING.DATA.MONGODB.URI: mongodb://mongodb:27017/notes-api-database
+  
+  auth-service:
+    image: auth-service-docker
+    ports:
+      - "8999:8999"
+    networks:
+      - notes-network
+    depends_on:
+      - eureka-service
+      - mongodb
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING.DATA.MONGODB.HOST: mongodb
+      SPRING.DATA.MONGODB.PORT: 27017
+      SPRING.DATA.MONGODB.URI: mongodb://mongodb:27017/notes-api-database
+
+  api-gateway:
+    image: api-gateway-docker
+    ports:
+      - "8765:8765"
+    networks:
+      - notes-network
+    depends_on:
+      - eureka-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://eureka-service:8761/eureka
+  
+  eureka-service:
+    image: eureka-server-docker
+    ports:
+      - "8761:8761"
+    networks:
+      - notes-network
+
+
+networks:
+  notes-network:
